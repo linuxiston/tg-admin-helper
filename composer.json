@@ -1,0 +1,21 @@
+{
+    "name": "pardayev/tg-admin-helper",
+    "description": "Bot helper for control telegram group",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Erkin Pardayev",
+            "email": "erkin.pardayev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pardayev\\botHelper\\": "classes/botHelper"
+        }
+    }
+}
