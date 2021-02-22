@@ -52,9 +52,64 @@ class Main
 
 	public function progressTextMessage() : void
 	{
-		if ($this->_db->isNewUser($this->_data->message->from->id)) {
+		$userID = $this->_data->message->from->id;
+		$message = $this->_data->message->text;
+		$tipData = $this->_db->getLastTip();
+		$this->alertModerators($tipData);
+
+		if ($this->_db->isNewUser($userID)) {
 			$this->_db->registerUser($this->_data);
-			$this->greetings($this->_data->message->from->id);
+			$this->greetings($userID);
+		}
+		$arr = explode('-', $message);
+		if (count($arr) > 2) {
+			if ($this->_db->isAddingNewTip($arr[0])) {
+				$this->_db->addNewTip($message, $userID);
+				$msg = "Yangi ma'lumot qo'shganingiz uchun rahmat,";
+				$msg .= " qo'shilgan ma'lumot moderatorlar tomonidan tasdiqlanganidan keyin ro'yhatga qo'shiladi";
+				$tipData = $this->_db->getLastTip();
+				$this->alertModerators($tipData);
+			} else {
+				$msg = "Ma'lumot qo'shish uchun bunday to'plam topilmadi.";
+			}
+			$params = [
+				'chat_id' => $userID,
+				'text' => $msg
+			];
+			$this->sendRequest("sendMessage", $params);
+		}
+	}
+
+	public function alertModerators(array $tipData) : void
+	{
+		$msg = "Yangi buyruq qo'shildi, iltimos tasdiqlang yoki o'chirib yuboring\n";
+		$msg .= "Bo'lim: " . $tipData['command'] . "\n";
+		$msg .= "Nomi: " . $tipData['name'] . "\n";
+		$msg .= "Izoxi: " . $tipData['body'] . "\n";
+		$msg .= "Muallif: " . $tipData['fio'] . "\n";
+		$msg .= "Link @" . $tipData['tg_username'] . "\n";
+		$keyboard = [
+			'inline_keyboard' => [
+				[
+					[
+						'text' => 'Tasdiqlash',
+						'callback_data' => 'tips:' . $tipData['id'] . ':accept'
+					],
+					[
+						'text' => 'Bekor qilish',
+						'callback_data' => 'tips:' . $tipData['id'] . ':remove'
+					]
+				]
+			]
+		];
+		$moderators = $this->_db->getModerators();
+		foreach ($moderators as $moderator) {
+			$params = [
+				'chat_id' => $moderator,
+				'text' => $msg,
+				'reply_markup' => json_encode($keyboard)
+			];
+			$this->sendRequest('sendMessage', $params);
 		}
 	}
 
@@ -85,6 +140,8 @@ class Main
 		$this->sendRequest("sendMessage", $params);
 	}
 
+
+
 	public function sendRequest(string $method, array $params) : void
 	{
 		$url = "https://api.telegram.org/bot" . $this->_config['tgBotToken'] . "/" .$method;
@@ -98,7 +155,8 @@ class Main
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 80);
 
-		curl_exec($ch);
+		$t = curl_exec($ch);
+		var_dump($t);
 		curl_close($ch);
 	}
 
