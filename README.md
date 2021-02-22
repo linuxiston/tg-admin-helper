@@ -1,5 +1,6 @@
 Telegram bot for help group admins  
 -------
+Telegram bot for managing [Linuxiston Community Group](https://t.me/linuxiston)
 
 REQUIREMENTS
 ----
