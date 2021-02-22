@@ -35,3 +35,4 @@ You can suggest extra function.
 For contact  
 Telegram https://t.me/ErkinPardayev  
 Email: erkin.pardayev@gmail.com
+or create issue [here](https://github.com/Linuxiston/tg-admin-helper/issues)
