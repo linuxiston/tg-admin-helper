@@ -1,12 +1,16 @@
 {
     "name": "pardayev/tg-admin-helper",
-    "description": "Bot helper for control telegram group",
+    "description": "Bot for managing Linuxiston Community Group",
     "type": "project",
     "license": "MIT",
     "authors": [
         {
             "name": "Erkin Pardayev",
             "email": "erkin.pardayev@gmail.com"
+        },
+        {
+            "name": "Shukrullo Turgunov",
+            "email": "shookrullo@gmail.com"
         }
     ],
     "require": {
