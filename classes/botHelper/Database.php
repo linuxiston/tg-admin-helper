@@ -16,7 +16,6 @@ class Database
 	private $_name = "helper";
 	private $db;
 
-	const STATUS_INACTIVE = 0;
 	const STATUS_ACTIVE = 1;
 	const MODERATOR_ROLE = 1;
 
@@ -51,18 +50,17 @@ class Database
 		$stmt->execute([$tgUserID, $from, $tgUserName, null, time()]);
 	}
 
-	public function getAviableCommands() : array
+	public function getAvailableCommands() : array
 	{
 		$statement = $this->db->prepare("SELECT name FROM commands WHERE status = " . self::STATUS_ACTIVE);
 		$statement->execute();
-		$rows = $statement->fetchAll(PDO::FETCH_ASSOC);
-		return $rows;
+		return $statement->fetchAll(PDO::FETCH_ASSOC);
 	}
 
 	public function isAddingNewTip(string $tip) : bool
 	{
 		$statement = $this->db->prepare("SELECT id FROM commands WHERE name = :name");
-		$statement->bindParam(":name", $tip, PDO::PARAM_STR);
+		$statement->bindParam(":name", $tip);
 		$statement->execute();
 		$row = $statement->fetch(PDO::FETCH_ASSOC);
 		return is_array($row);
@@ -71,7 +69,7 @@ class Database
 	public function getCommand(string $command) : string
 	{
 		$statement = $this->db->prepare("SELECT id FROM commands WHERE name = :name");
-		$statement->bindParam(":name", $command, PDO::PARAM_STR);
+		$statement->bindParam(":name", $command);
 		$statement->execute();
 		$row = $statement->fetch(PDO::FETCH_ASSOC);
 		return $row['id'];
@@ -91,18 +89,50 @@ class Database
 	{
 		$sql = "SELECT tips.`id`, tips.`name`, tips.`body`, tips.`author_id`, commands.`name` as command,
 				users.`fio`, users.`tg_username` FROM tips LEFT JOIN commands ON tips.command_id = commands.id
-				LEFT JOIN users	ON tips.author_id = users.telegram_id LIMIT 1";
+				LEFT JOIN users	ON tips.author_id = users.telegram_id ORDER BY tips.id DESC LIMIT 1";
 		$statement = $this->db->prepare($sql);
 		$statement->execute();
-		$row = $statement->fetch(PDO::FETCH_ASSOC);
-		return $row;
+		return $statement->fetch(PDO::FETCH_ASSOC);
 	}
 
 	public function getModerators() : array
 	{
 		$statement = $this->db->prepare("SELECT telegram_id FROM users WHERE role_id = " . self::MODERATOR_ROLE);
 		$statement->execute();
-		$rows = $statement->fetch(PDO::FETCH_ASSOC);
-		return $rows;
+		return $statement->fetch(PDO::FETCH_ASSOC);
+	}
+
+	public function acceptTip(int $tipID) : void
+	{
+		$statement = $this->db->prepare("UPDATE tips SET status = 1 WHERE id = " . $tipID);
+		$statement->execute();
+	}
+
+	public function removeTip(int $tipID) : void
+	{
+		$statement = $this->db->prepare("DELETE FROM tips 1 WHERE id = " . $tipID);
+		$statement->execute();
+	}
+
+	public function getTips(string $command) : array
+	{
+		$tip = str_replace('/', '', $command);
+		$sql = "SELECT `tips`.`name`, `tips`.`body` FROM `commands`";
+    	$sql .= " LEFT JOIN `tips` ON `commands`.`id` = `tips`.`command_id` WHERE `tips`.`status` = 1";
+	    $sql .= " AND `commands`.`name` = :tip";
+		$statement = $this->db->prepare($sql);
+		$statement->bindParam(":tip", $tip);
+		$statement->execute();
+		return $statement->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	public function isAdmin(int $userID, $role = self::MODERATOR_ROLE) : bool
+	{
+		$statement = $this->db->prepare("SELECT id FROM users WHERE role_id = :role AND telegram_id = :tgID");
+		$statement->bindParam(":tgID", $userID, PDO::PARAM_INT);
+		$statement->bindParam(":role", $role, PDO::PARAM_INT);
+		$statement->execute();
+		$row = $statement->fetch(PDO::FETCH_ASSOC);
+		return !is_bool($row);
 	}
 }

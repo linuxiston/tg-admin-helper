@@ -5,7 +5,7 @@
  * @link https://pardayev.uz
  * @access public
  * @version 0.0.1
- * @see
+ * @see https://github.com/Linuxiston/tg-admin-helper
  */
 
 namespace Pardayev\botHelper;
@@ -31,8 +31,16 @@ class Main
 		if ($this->isUnnecessaryMessage()) {
 			$this->deleteMessage();
 		}
+
+		if (isset($this->_data->message->entities)) {
+			$this->progressCommand();
+		}
+
 		if (isset($this->_data->message)) {
 			$this->progressTextMessage();
+		}
+		if (isset($this->_data->callback_query)) {
+			$this->progressCallbackData($this->_data->callback_query);
 		}
 	}
 
@@ -50,17 +58,47 @@ class Main
 		$this->sendRequest("deleteMessage", $params);
 	}
 
+	public function progressCommand() : void
+	{
+		if ($this->_db->isNewUser($this->_data->message->from->id)) {
+			$this->_db->registerUser($this->_data);
+			$this->greetings($this->_data->message->from->id);
+		}
+		if ($this->_db->isAdmin($this->_data->message->from->id)) {
+			$tips = $this->_db->getTips($this->_data->message->text);
+			$msg = "";
+			foreach ($tips as $tip) {
+				$msg .= "*" . $tip['name'] . "* - " . $tip['body'] . "\n";
+			}
+			$params = [
+				'chat_id' => $this->_data->message->from->id,
+				'text' => $msg,
+				'parse_mode' => 'Markdown'
+			];
+			$this->sendRequest("sendMessage", $params);
+		} else {
+			var_dump(1);
+		}
+		exit();
+	}
+
+	public function progressCallbackData(stdClass $data)
+	{
+		$arr = explode(':', $data->data);
+		if ($arr[0] == 'tips') {
+			if ($arr[2] == 'accept') {
+				$this->_db->acceptTip($arr[1]);
+			} else {
+				$this->_db->removeTip($arr[1]);
+			}
+		}
+	}
+
 	public function progressTextMessage() : void
 	{
 		$userID = $this->_data->message->from->id;
 		$message = $this->_data->message->text;
-		$tipData = $this->_db->getLastTip();
-		$this->alertModerators($tipData);
 
-		if ($this->_db->isNewUser($userID)) {
-			$this->_db->registerUser($this->_data);
-			$this->greetings($userID);
-		}
 		$arr = explode('-', $message);
 		if (count($arr) > 2) {
 			if ($this->_db->isAddingNewTip($arr[0])) {
@@ -115,7 +153,7 @@ class Main
 
 	public function greetings(int $tgUserID) : void
 	{
-		$commands = $this->_db->getAviableCommands();
+		$commands = $this->_db->getAvailableCommands();
 		$msg = "Salom. Linuxiston community botiga xush kelibsiz!\n";
 		$msg .= "Hozirda mavjud to'plamlar ro'yhati: \n";
 		$i = 1;
@@ -155,8 +193,7 @@ class Main
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 80);
 
-		$t = curl_exec($ch);
-		var_dump($t);
+		curl_exec($ch);
 		curl_close($ch);
 	}
 
