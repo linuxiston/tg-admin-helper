@@ -10,11 +10,19 @@ use stdClass;
 
 class Database
 {
+
+//	private $_host = "localhost";
+//	private $_user = "root";
+//	private $_pass = "root";
+//	private $_name = "helper";
+//	private $db;
+
 	private $_host = "localhost";
-	private $_user = "root";
-	private $_pass = "root";
-	private $_name = "helper";
+	private $_user = "admin_helper";
+	private $_pass = "zkkFv6Xx5W";
+	private $_name = "admin_group_helper";
 	private $db;
+
 
 	const STATUS_ACTIVE = 1;
 	const MODERATOR_ROLE = 1;

@@ -60,10 +60,8 @@ class Main
 
 	public function progressCommand() : void
 	{
-		if ($this->_db->isNewUser($this->_data->message->from->id)) {
-			$this->_db->registerUser($this->_data);
-			$this->greetings($this->_data->message->from->id);
-		}
+		// TODO mavjud to'plamlar (bazadan commands jadvali) so'ralganda yuborish kerak
+
 		if ($this->_db->isAdmin($this->_data->message->from->id)) {
 			$tips = $this->_db->getTips($this->_data->message->text);
 			$msg = "";
@@ -71,13 +69,14 @@ class Main
 				$msg .= "*" . $tip['name'] . "* - " . $tip['body'] . "\n";
 			}
 			$params = [
-				'chat_id' => $this->_data->message->from->id,
+				'chat_id' => $this->_config['groupID'],
 				'text' => $msg,
 				'parse_mode' => 'Markdown'
 			];
 			$this->sendRequest("sendMessage", $params);
 		} else {
-			var_dump(1);
+			// Bu yerda admin huquqini olmagan oddiy foydalanuvchilar uchun nimadir deb qo'yilishi kerak ))
+			exit();
 		}
 		exit();
 	}
@@ -98,6 +97,16 @@ class Main
 	{
 		$userID = $this->_data->message->from->id;
 		$message = $this->_data->message->text;
+
+		// Agar guruhda yozilgan bo'lsa botni to'xtatamiz
+		if ($userID != $this->_data->message->chat->id) {
+			exit();
+		}
+
+		if ($this->_db->isNewUser($userID)) {
+			$this->_db->registerUser($this->_data);
+			$this->greetings($userID);
+		}
 
 		$arr = explode('-', $message);
 		if (count($arr) > 2) {
